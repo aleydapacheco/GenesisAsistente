@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title font-family='Roboto' font-size="40px">Asistente Genesis</title>
+    <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@mdi/font@5.x/css/materialdesignicons.min.css" rel="stylesheet">
+    <link href="css/vuetify.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/sweetalert2.min.css">  
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+    <style>
+        #app{
+            font-family:'Roboto';
+            font-size: 40px;
+        }
+    </style>
+    
+</head>
+<body>
+    <!--Instanciando a la seccion que trabajara con las etiquetas vuetify--><v-container style="margin: 0px; padding: 0px;">
+<div id="app">
+    <!--Toolbar-->
+<template>
+    <v-app>
+    <!-- TABS -->
+    <!--MENU SUPERIOR DE HOJAS DISPONIBLES POR SECCION DE MENU-->
+
+            <v-toolbar absolute dark shrink-on-scroll prominent src="img/luke-chesser-1uxV8fAfhVM-unsplash.jpg"  width="100%">        
+                <div style="display: contents; padding-top: 20px; margin: 20px;">
+                    <div style="padding: 1px; margin: 10px; display: block;">
+                        <v-app-bar-nav-icon @click="dibujarMenuDesplegable()"></v-app-bar-nav-icon>
+                        <!--<v-app-bar-nav-icon @click="dibujarMenu = !dibujarMenu"></v-app-bar-nav-icon>-->                    
+                        <v-toolbar-title style="margin: 10px;  padding-bottom: 25px; padding-left: 20px; font-size: 30px;">Asistente Genesis</v-toolbar-title>
+                    </div>
+                    <v-spacer></v-spacer> 
+                    <div style="padding: 1px; margin: auto; ">
+                        <h1 style="margin: 5px; font-size: 18px; color:rgb(255, 255, 255)">
+                            Bienvenid@: <% if (user != undefined){ %>
+                                <span class="badge bg-success"><%= user.u_nombre %> </span> 
+                            <% } %>
+                        </h1>
+                        <h2 style="margin: 5px; font-size: 18px; color:rgb(255, 255, 255); text-align: right;">
+                            Usuario : <% if (user != undefined){ %>
+                                <span class="badge bg-success"><%=user.u_usuario %></span> 
+                            <% } %>
+                        </h2>
+                        <v-btn style="margin-left: 180px; margin-top: 10px; padding: 2px; display: flex; width: 90px;" href="logout" class="lime lighten-1" >
+                            Salir
+                        </v-btn>
+                        
+                    </div>   
+                </div>
+                
+                    <template v-slot:extension >
+                        <v-tabs align-with-title v-if="dibujarMenuHome == true" @click="menuHome()">
+                            <v-tab >Home</v-tab>
+                        </v-tabs>                  
+                        <v-tabs align-with-title v-for="habitacion in habitaciones" :key="habitacion.title" v-if="habitacion.title == filtrarHeadersPorHabitacion" v-show="dibujarMenuHabitaciones == true">
+                        <v-tab v-for="child in habitacion.items" @click ="child.method" v-text="child.title" ></v-tab>                       
+                        </v-tabs>
+                        <v-tabs align-with-title v-for="menuFijo in menusFijos" :key="menuFijo.title" v-if="menuFijo.title == filtrarHeadersPorMultimediaYUsuarios" v-show="dibujarMenuMultimediaUsuariosDispositivos == true">
+                        <v-tab v-for="child in menuFijo.items" @click ="child.method" v-text="child.title" ></v-tab>                       
+                        </v-tabs>
+                        <v-tabs align-with-title v-if="dibujarMenuAccount == true">
+                            <v-tab >Account</v-tab>
+                        </v-tabs>
+                    </template>
+                
+            </v-toolbar>
+        
+        <!-- ITEMS -->
+        <!--MENU LATERAL IZQUIERDO DE NAVEGACION-->
+
+            <v-navigation-drawer v-model="dibujarMenu" temporary app>
+                <v-list nav dense >
+
+                    <v-list-item-group active-class="deep-purple--text text--accent-4" >
+                        <v-list-item @click="menuHome()">
+                            <v-list-item-icon>
+                                <v-icon>mdi-home</v-icon>
+                            </v-list-item-icon>
+                            <v-list-item-title>Home</v-list-item-title>
+                        </v-list-item>
+                        <!--Menu Habitaciones-->
+                        <v-list-group :value="true" prepend-icon="mdi-window-closed-variant">
+                            <template v-slot:activator>
+                                <v-list-item-title>Habitaciones</v-list-item-title>
+                            </template>
+                            
+                            <v-list-group v-for="habitacion in habitaciones" :key="habitacion.title" v-model="habitacion.active" :prepend-icon="habitacion.action"  sub-group>
+                                <template v-slot:activator >
+                                    <v-list-item-content @click ="habitacion.method">
+                                        <v-list-item-title v-text="habitacion.title"></v-list-item-title>
+                                    </v-list-item-content>
+                                </template>
+                                <v-list-item v-for="child in habitacion.items" :key="child.title" @click ="child.method">
+                                    <v-list-item-content >
+                                        <v-list-item-title v-text="child.title" ></v-list-item-title>
+                                    </v-list-item-content>
+                                    <v-list-item-icon>
+                                        <v-icon v-text="child.icon"></v-icon>
+                                    </v-list-item-icon>
+                                </v-list-item>
+                            </v-list-group>
+                        </v-list-group>
+
+                        <!-- Menu Multimedia y Usuarios-->
+                        <v-list-group v-for="menuFijo in menusFijos" :key="menuFijo.title" v-model="menuFijo.active" :prepend-icon="menuFijo.action" no-action>
+
+                            <template v-slot:activator>
+                                <v-list-item-content>
+                                    <v-list-item-title v-text="menuFijo.title"></v-list-item-title>
+                                </v-list-item-content>
+                            </template>
+                            <v-list-item v-for="child in menuFijo.items" :key="child.title" @click="child.method">
+                                <v-list-item-content>
+                                    <v-list-item-title v-text="child.title" ></v-list-item-title>
+                                </v-list-item-content>
+                                <v-list-item-icon>
+                                    <v-icon v-text="child.icon"></v-icon>
+                                </v-list-item-icon>
+                            </v-list-item>
+
+                        </v-list-group>
+
+                        <!-- Menu Perfil de usuario-->                        
+                        <v-list-item @click="menuAccount()">
+                            <v-list-item-icon>
+                                <v-icon>mdi-account</v-icon>
+                            </v-list-item-icon>
+                            <v-list-item-title>Perfil</v-list-item-title>
+                        </v-list-item>
+                    </v-list-item-group>
+
+                </v-list>
+            </v-navigation-drawer>
+        </div>
+</v-container>
+<v-container style="margin-left: auto; margin-right: auto; padding: 10px; padding-top: 200px; width: 1300px;">
+<div>
+
+    <!--Diseno del Home-->
+    <v-card class="mx-auto" color="grey lighten-3 black--text"  max-width="1300" elevation="10" v-if="cajonHome == true" > 
+        <div style=" padding: 10px; margin: 30px;">
+            <v-row style=" font-size: 35px; margin: 10px; padding: 3px; font-weight: 400;" >Bienvenido a Asistente Genesis</v-row>
+            <v-row style="margin: 2px; padding: 20px;">
+                <v-avatar size="250" style=" padding: 5px; margin: auto;">
+                    <img style="border: solid 2px gray;" src="img/botUno.jpg" >
+                </v-avatar>
+            </v-row>
+                
+            <v-row style="font-size: 22px; padding: 16px; margin: 15px;" >
+                <v-banner style="justify-content: space-around; text-align: justify;">
+                    <br>Génesis es una interfaz de asistencia conversacional diseñada y programada para interpretar 
+                    las intenciones emitidas por un usuario bajo ciertos contextos en una conversación e interactuar 
+                    con las personas empleando Inteligencia Artificial. Así también, está capacitada para hacer uso 
+                    del Procesamiento del Lenguaje Natural en audio o texto. </br>
+                </v-banner>
+                </v-text>
+            </v-row>          
+            
+            
+        </div>
+    </v-card>
+        
+        <% if (user.u_rol == 'Administrador') { %>
+        <v-sheet>
+        <!--Body Administracion Usuarios-->
+            <v-main style="padding-top: 10px; margin: 20px;">
+                <v-btn class="mx-2" fab dark color="grey darken-3" elevation="10" @click="formNuevo()" v-if="dibujarBotonNuevoUsuario == true" ><v-icon dark >mdi-plus</v-icon></v-btn >
+                <v-card class="mx-auto mt-5" color="transparent" elevation="10" max-width="1300">                          
+                <!--Tabla y formulario-->
+                <v-simple-table class="mt-5" v-if="dibujarTablaUsuarios == true">
+                    <template v-slot:default>
+                        <thead>
+                            <tr class="grey darken-3">
+                                <th class="white--text">ID</th>
+                                <th class="white--text">NOMBRE COMPLETO</th>
+                                <th class="white--text">USUARIO</th>
+                                <th class="white--text">ROL</th>
+                                <th class="white--text">Nº CELULAR</th>
+                                <th class="white--text">FECHA DE REGISTRO</th>
+                                <th class="white--text">ACCIONES</th>
+                            </tr>
+                        </thead>
+                    <tbody>
+                        <tr v-for="usuario in users" :key="usuario.id">
+                            <td>{{usuario.users_id}}</td>
+                            <td>{{usuario.u_nombre}}</td>
+                            <td>{{usuario.u_usuario}}</td>
+                            <td>{{usuario.u_rol}}</td>
+                            <td>{{usuario.u_celular}}</td>
+                            <td>{{reformatearHora(usuario.u_fecha_hora)}}</td>
+                            <td>
+                                <v-btn class="indigo darken-2" dark small fab @click="formEditar(usuario.users_id,usuario.u_nombre,usuario.u_usuario,usuario.u_rol,usuario.u_celular)" elevation="5"><v-icon>mdi-pencil</v-icon></v-btn>
+                                <v-btn class="red darken-2" dark small fab @click="borrar(usuario.users_id)" elevation="5"><v-icon>mdi-delete</v-icon></v-btn>
+                            </td>
+                        </tr>
+                    </tbody>
+                    </template>
+                        </v-simple-table>
+                            </v-card>
+                                <!--COMPONENTE DE DIALOGO PARA CREAR Y EDITAR UN USUARIO-->
+                                <v-dialog v-model="dialog" max-width="600" display = "block">
+                                <v-card>
+                                <!--Titulo de la tarjeta (Titulo de esta tarjeta)-->
+                                    <v-card-title class="grey darken-3 white--text">{{ name }}{{ numUsuario }}</v-card-title> 
+                                    
+                                    <!--Body o cuerpo de la tarjeta (Formularios)-->
+                                    <v-card-text style="padding-bottom:0px;">
+                                        <v-form>
+                                            <v-container>
+                                                            
+                                                <input v-model="usuario.id" hidden></input>
+                                                <!--Columnas-->
+                                                <p></p>
+                                                    <v-row cols="12" md="4">
+                                                        <v-text-field v-model="usuario.nombre"  label="Nombre Completo" required>{{usuario.u_nombre}}</v-text-field>
+                                                    </v-row>
+                                                    <v-row cols="12" md="4">
+                                                        <v-text-field v-model="usuario.usuario" :counter="10" label="Usuario" required >{{usuario.u_usuario}}</v-text-field>
+                                                    </v-row>                   
+                                                    <v-row cols="12" md="4" >
+                                                        <v-select v-model="usuario.rol" :items="['Administrador','Usuario']" :value="['admin','user']"  :rules="[v => !!v || 'El rol es necesario']" label="Rol" ></v-select>
+                                                    </v-row>
+                                                    <v-row cols="12" md="4" >
+                                                        <v-text-field v-model="usuario.celular" label="Número de Celular" :counter="8" required>{{usuario.u_celular}}</v-text-field>
+                                                    </v-row>
+                                                    <v-row cols="12" md="4" v-if="accionFormulario == true">
+                                                        <v-text-field v-model="usuario.contrasena" type="password"  :rules="[v => !!v || 'Contraseña requerida', v => v.length >= 4 || 'La contraseña debe contener mínimamente 8 caracteres']" label="Contraseña" required></v-text-field>
+                                                    </v-row>
+                                                    <v-row cols="12" md="4" v-if="accionFormularioDos == true">
+                                                        <v-text-field v-model="usuario.contrasenaDos" type="password"  :rules="[v => this.usuario.contrasena === this.usuario.contrasenaDos || 'La contraseña no coincide']" label="Confirmación de contraseña" required></v-text-field>
+                                                    </v-row>
+
+                                            </v-container>
+                                                </v-card-text>
+                                                    <!--Footer o pie de pagina (Botones de Cancelar y Guardar)-->
+                                                    <v-card-actions style="padding-bottom:20px;">
+                                                        <v-spacer></v-spacer>
+                                                        <v-btn class="grey darken-3" dark small @click="guardar()" type="submit" color="gray darken-3 white--text" margin="auto" style="margin:0px;" elevation="5">{{ nombreBoton }}</v-btn>
+                                                        <v-btn dark small @click="dialog=false" color="white black--text" margin="auto" style="width: auto; margin:3px;" elevation="5">Cancelar</v-btn>                
+                                                    </v-card-actions>
+
+                                        </v-form>
+                                </v-card>
+                                </v-dialog>
+
+            <% } %>
+            <% if (user.u_rol == 'Usuario'){ %>
+                <v-card class="mx-auto mt-5" max-width="336" color="white grey darken-1--text" style="margin: 220px; position: relative;" v-if="dibujarBotonNuevoUsuario == true">
+                    <v-card-title>IMPORTANTE</v-card-title>
+                    <v-card-text >
+                        Para acceder a la seccion de "Administracion de Usuarios", son necesarios los permisos del rol de tipo "Administrador". Pide al administrador la modificacion del rol en tu cuenta de usuario o solicita ayuda al correo electronico de soporte asistentegenesisadmin@gmail.com.
+                    </v-card-text>
+                </v-card>
+            <% } %>
+            <!--Tablas Iterables-->
+                        <v-card class="mx-auto mt-5" color="transparent" elevation="10" v-if="dibujarTablaHabitaciones == true">
+                            <!--Tabla Sensores-->
+                            <v-simple-table class="mt-5" >
+                                <template v-slot:default >
+                                    <thead v-for="habitacion in habitaciones" :key="habitacion.title" v-if="mostrarDatosTablaSegunTipoDeDispositivo != ''">
+                                        <tr class="grey darken-3" v-for="n in iterandoHeadersArrayDispositivo(filtrarHeadersPorDispositivoDeHabitacion)">
+                                            <!---->
+                                            <th class="white--text" v-if="habitacion.title == filtrarHeadersPorHabitacion">Id</th>
+                                            <th class="white--text" v-show="mostrarDatosTablaSegunTipoDeDispositivo != 'Puerta'"  v-if="habitacion.title == filtrarHeadersPorHabitacion" >{{n}}</th>
+
+                                            <!--<th class="white--text" v-for ="m in n" v-show="mostrarDatosTablaSegunTipoDeDispositivo == 'Puerta'"  v-if="habitacion.title == filtrarHeadersPorHabitacion" >{{m}}</th>-->                                           
+                                            <th class="white--text" v-show="mostrarDatosTablaSegunTipoDeDispositivo == 'Puerta'"  v-if="habitacion.title == filtrarHeadersPorHabitacion" >Estado</th>
+                                            <th class="white--text" v-show="mostrarDatosTablaSegunTipoDeDispositivo == 'Puerta'"  v-if="habitacion.title == filtrarHeadersPorHabitacion" >Medio</th>
+                                            <th class="white--text" v-show="mostrarDatosTablaSegunTipoDeDispositivo == 'Puerta'"  v-if="habitacion.title == filtrarHeadersPorHabitacion" >S. Mov. Anterior</th>
+                                            <th class="white--text" v-show="mostrarDatosTablaSegunTipoDeDispositivo == 'Puerta'"  v-if="habitacion.title == filtrarHeadersPorHabitacion" >S. Mov. Posterior</th>
+                                            <th class="white--text" v-show="mostrarDatosTablaSegunTipoDeDispositivo == 'Puerta'"  v-if="habitacion.title == filtrarHeadersPorHabitacion" >Automatico</th>
+                                            
+                                            <!---->
+                                            <th class="white--text" v-if="habitacion.title == filtrarHeadersPorHabitacion">Fecha y Hora</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!--Sensores-->
+                                        <tr v-for="dato in datos" :key="dato.id" v-if="mostrarDatosTablaSegunTipoDeDispositivo == 'Sensor'" >
+                                            <td v-text="dato.id"></td>
+                                            <td v-text="dato.estado"></td>  
+                                            <td v-text="reformatearHora(dato.fechaYHora)"></td>                         
+                                        </tr>
+                                    </tbody>
+                                    <tbody>
+                                        <!--Actuadores-->
+                                        <tr v-for="dato in datos" :key="dato.id" v-if="mostrarDatosTablaSegunTipoDeDispositivo == 'Actuador'" >
+                                            <td v-text="dato.id"></td>
+                                            <td v-text="dato.estado"></td>  
+                                            <td v-text="reformatearHora(dato.fechaYHora)"></td>                         
+                                        </tr>
+                                    </tbody>
+                                    <tbody >
+                                        <!--Puerta-->
+                                        <tr v-for="dato in datos" :key="dato.id" v-if="mostrarDatosTablaSegunTipoDeDispositivo == 'Puerta'">
+                                            <td v-text="dato.id"></td>
+                                            <td v-text="dato.estado"></td> 
+                                            <td v-text="dato.medio"></td>
+                                            <td v-text="dato.sensorAnterior"></td> 
+                                            <td v-text="dato.sensorPosterior"></td>   
+                                            <td v-text="dato.automatic"></td> 
+                                            <td v-text="reformatearHora(dato.fechaYHora)"></td>                         
+                                        </tr>
+                                    </tbody>
+                                </template>
+                            </v-simple-table>
+                        </v-card>
+       
+            <!--Body Tabla Socorro-->
+            <v-card class="mx-auto mt-5" color="transparent" style="margin-top: 440px;" width="800" elevation="10" v-if="dibujarTablaSocorro == true">
+                <!--Tabla y formulario-->
+                <v-simple-table class="mt-5" >
+                    <template v-slot:default>
+                        <thead>
+                            <tr class="grey darken-3">
+                                <th class="white--text">ID</th>
+                                <th class="white--text">MODO CASA</th>
+                                <th class="white--text">MEDIO DE ACTVACIÓN</th>
+                                <th class="white--text">USUARIO SOLICITANTE</th>
+                                <th class="white--text">FECHA DE SOLICITUD</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="socorro in socorros" :key="socorro.id" >
+                                <td>{{socorro.socorro_id}}</td>
+                                <td>{{socorro.s_modo_casa}}</td>
+                                <td>{{socorro.s_activacion}}</td>
+                                <td>{{socorro.s_nombre}}</td>
+                                <td>{{reformatearHora(socorro.s_fecha_hora)}}</td>                        
+                            </tr>
+                        </tbody>
+                    </template>
+                </v-simple-table>
+            </v-card>
+
+            <!--Body Tabla Disuaciones-->
+            <v-card class="mx-auto mt-5" color="transparent" width="800" elevation="10"  v-if="dibujarTablaDisuaciones == true">
+                <!--Tabla y formulario-->
+                <v-simple-table class="mt-5">
+                    <template v-slot:default>
+                        <thead>
+                            <tr class="grey darken-3">
+                                <th class="white--text">ID</th>
+                                <th class="white--text">NOMBRE DE USUARIO</th>
+                                <th class="white--text">MEDIO DE DISUACIÓN</th>
+                                <th class="white--text">FECHA DE DISUACIÓN</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="disuacion in disuaciones" :key="disuacion.id" >
+                                <td>{{disuacion.disuasiones_id}}</td>
+                                <td>{{disuacion.d_nombre}}</td>
+                                <td>{{disuacion.d_medio}}</td>
+                                <td>{{reformatearHora(disuacion.d_fecha_hora)}}</td>                          
+                            </tr>
+                        </tbody>
+                    </template>
+                </v-simple-table>
+            </v-card>
+
+            <!--Body Tabla Multimedia-->
+            <v-card class="mx-auto mt-5" color="transparent" elevation="10" v-if="dibujarTablaMultimedia == true" width="800">
+                <!--Tabla y formulario-->
+                <v-simple-table class="mt-5" >
+                    <template v-slot:default>
+                        <thead>
+                            <tr class="grey darken-3">
+                                <th class="white--text">ID</th>
+                                <th class="white--text">ARCHIVO</th>
+                                <th class="white--text">TIPO DE ARCHIVO</th>
+                                <th class="white--text">FECHA DE REGISTRO</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="multimedia in multimedias" :key="multimedia.id" >
+                                <td style="margin: 20px;">{{multimedia.camara_id}}</td>
+                                <td v-if="multimedia.c_tipo_archivo == 8">                                
+                                    <video :src="multimedia.c_ruta" width="240px" height="180px" style="margin: 20px;" controls></video>
+                                </td>
+                                <td v-if="multimedia.c_tipo_archivo == 2">
+                                    <img :src="multimedia.c_ruta" width="240px" height="180px" style="margin: 20px;" >
+                                </td>
+                                <td v-if="multimedia.c_tipo_archivo == 2" style="margin: 20px;" >INSTANTANEA</td>
+                                <td v-if="multimedia.c_tipo_archivo == 8" style="margin: 20px;" >VIDEO</td>
+                                <td>{{reformatearHora(multimedia.c_fecha_hora)}}</td>                        
+                            </tr>
+                        </tbody>
+                    </template>
+                </v-simple-table>
+            </v-card>
+            <!--Body Tabla En vivo-->
+            <v-card class="mx-auto" max-width="500" color="grey darken-3" style="position: relative;" v-if="dibujarTablaEnVivo == true" elevation="10">
+                <template>
+                    <div >
+                        <img src="http://192.168.0.250:8081/" width="500px" height="500px" style="margin: 0px;">
+                    </img>
+                    </div>
+                </template>
+            </v-card>
+
+            <!--COMPONENTE DE DIALOGO PARA CREAR Y EDITAR UN DISPOSITIVO-->
+
+            <% if (user.u_rol == 'Administrador'){ %>
+                <v-btn class="mx-2" fab dark color="grey darken-3" @click="formNuevaHabitacion()" v-if="dibujarBotonNuevaHabitacion == true" elevation="10"><v-icon dark >mdi-door-open</v-icon></v-btn>
+                <v-card class="mx-auto mt-5" color="transparent" elevation="10" v-if="dibujarTablaAdministracionHabitaciones == true">
+                    
+                    <!--Tabla de Habitaciones-->
+                    <v-simple-table class="mt-5" >
+                        <template v-slot:default>
+                            <thead>
+                                <tr class="grey darken-3">
+                                    <th class="white--text">ID</th>
+                                    <th class="white--text">HABITACION</th>
+                                    <th class="white--text">FECHA DE REGISTRO</th>
+                                    <th class="white--text">ACCIONES</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="nuevaHabitacion in nuevasHabitaciones" :key="nuevaHabitacion.id">
+                                    <td>{{nuevaHabitacion.id}}</td>
+                                    <td>{{nuevaHabitacion.nombre}}</td>
+                                    <td>{{reformatearHora(nuevaHabitacion.fechaYHora)}}</td>
+                                    <td>
+                                        <v-btn class="indigo darken-2" dark small fab @click="formEditarHabitacion(nuevaHabitacion.id,nuevaHabitacion.nombre)" elevation="5"><v-icon>mdi-pencil</v-icon></v-icon></v-btn>
+                                        <v-btn class="red darken-2" dark small fab @click="eliminarHabitacion(nuevaHabitacion.id)" elevation="5"><v-icon>mdi-delete</v-icon></v-icon></v-btn>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </template>
+                    </v-simple-table>
+                </v-card>
+            <% } %>
+            <% if (user.u_rol == 'Usuario'){ %>
+                <v-card class="mx-auto mt-5"  max-width="336" color="white grey darken-1--text" style="margin: 220px; position: relative;"  v-if="dibujarTablaAdministracionHabitaciones == true">
+                    <v-card-title>IMPORTANTE</v-card-title>
+                    <v-card-text >
+                        Para acceder a la seccion de "Administracion de Habitaciones", son necesarios los permisos del rol de tipo "Administrador". Pide al administrador la modificacion del rol en tu cuenta de usuario o solicita ayuda al correo electronico de soporte asistentegenesisadmin@gmail.com.
+                    </v-card-text>
+                </v-card>
+            <% } %>
+
+            <% if (user.u_rol == 'Administrador'){ %>
+                <v-btn class="mx-2" fab dark color="grey darken-3" @click="formNuevoDispositivo()" v-if="dibujarBotonNuevoDispositivo == true" elevation="10"><v-icon dark >mdi-lightbulb</v-icon></v-btn>
+                <v-card class="mx-auto mt-5" color="transparent" elevation="10" v-if="dibujarTablaDispositivos == true">                     
+                    <!--Tabla de Dispositivos-->
+                    <v-simple-table class="mt-5">
+                        <template v-slot:default>
+                            <thead>
+                                <tr class="grey darken-3">
+                                    <th class="white--text">ID</th>
+                                    <th class="white--text"></th>
+                                    <th class="white--text">DISPOSITIVO</th>
+                                    <th class="white--text">HABITACION</th>
+                                    <th class="white--text">TIPO</th>
+                                    <th class="white--text">PIN</th>
+                                    <th class="white--text">FECHA DE REGISTRO</th>
+                                    <th class="white--text">ACCIONES</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="dispositivo in dispositivos" :key="dispositivo.id">
+                                    <td>{{dispositivo.id}}</td>
+                                    <td><v-icon>{{dispositivo.icono}}</v-icon></td>
+                                    <td>{{dispositivo.nombre}}</td>
+                                    <td>{{dispositivo.habitacion}}</td>
+                                    <td>{{dispositivo.tipo}}</td>
+                                    <td>GPIO {{dispositivo.pin}}</td>
+                                    <td>{{reformatearHora(dispositivo.fechaYhora)}}</td>
+                                    <td>
+                                        <v-btn class="indigo darken-2" dark small fab @click="formEditarDispositivo(dispositivo.id,dispositivo.nombre,dispositivo.habitacion,dispositivo.tipo,dispositivo.tabla,dispositivo.icono,dispositivo.pin)" elevation="5"><v-icon>mdi-pencil</v-icon></v-icon></v-btn>
+                                        <v-btn class="red darken-2" dark small fab @click="eliminarDispositivo(dispositivo.id)" elevation="5"><v-icon>mdi-delete</v-icon></v-icon></v-btn>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </template>
+                    </v-simple-table>
+                </v-card>               
+            <% } %>
+
+            <% if (user.u_rol == 'Usuario'){ %>
+                <v-card class="mx-auto mt-5"  max-width="336" color="white grey darken-1--text" style="margin: 220px; position: relative;"  v-if="dibujarTablaDispositivos == true">
+                    <v-card-title>IMPORTANTE</v-card-title>
+                    <v-card-text >
+                        Para acceder a la seccion de "Administracion de Dispositivos", son necesarios los permisos del rol de tipo "Administrador". Pide al administrador la modificacion del rol en tu cuenta de usuario o solicita ayuda al correo electronico de soporte asistentegenesisadmin@gmail.com.
+                    </v-card-text>
+                </v-card>
+            <% } %>
+
+                <!--COMPONENTE DE DIALOGO PARA CREAR UN NUEVO DISPOSITIVO-->
+                <v-dialog v-model="dialogNuevoDispositivo"  max-width="700" display = "block">
+                    <v-card>
+                    <!--Titulo de la tarjeta (Titulo de esta tarjeta)-->
+                        <v-card-title class="grey darken-3 white--text">{{nombreCardAccionDispositivo }}{{ nombreDispositivoAEditar}}</v-card-title> 
+                        <!--Body o cuerpo de la tarjeta (Formularios)-->
+                        <v-card-text style="padding-bottom:0px;">
+                            <v-form>
+                                <v-container>
+                                    <input v-model="dispositivo.id" hidden ></input>
+                                    <!--filas-->
+                                    <p></p>                                      
+                                        <!--Card para nuevo Dispositivo-->
+                                        <v-row cols="12" md="4">
+                                            <v-text-field v-model="dispositivo.nombre"  label="Nombre Dispositivo"  required>{{dispositivo.nombre}}</v-text-field>
+                                        </v-row>
+                                        <v-row cols="12" md="4">
+                                            <v-select v-model="dispositivo.habitacion" :items="iterandoNombreHabitaciones()" :value="iterandoNombreHabitaciones()"  :rules="[v => !!v || 'Especifique la habitacion a la cual asignar el dispositivo']" label="Habitacion"  required>{{dispositivo.habitacion}}</v-select>
+                                        </v-row>
+                                        <v-row cols="12" md="4">
+                                            <v-select v-model="dispositivo.tipo" :items="tipoDeDispositivo" :value="tipoDeDispositivoValue"  :rules="[v => !!v || 'Especifique el tipo de dispositivo a implementar']" label="Tipo de dispositivo" required>{{dispositivo.tipo}}</v-select>
+                                        </v-row>
+                                        <v-row cols="12" md="4">
+                                            <v-select v-model="dispositivo.pin" :items="pinesRestantesValue()" :value="pinesRestantesValue()" :rules="[v => !!v || 'Especifique el número de PIN asignado. ']" label="PIN" required>{{dispositivo.pin}}</v-select>
+                                        </v-row>
+                                        <v-row>
+                                            <v-text style="font-size: 16px; color: black;" required >Selecciona un icono que identifique al nuevo dispositivo: </v-text>
+                                        </v-row>
+                                        <v-row style="margin: auto; width: 400px;">
+                                            
+                                            <v-radio-group v-model="dispositivo.icono" :rules="[v => !!v || 'Especifique el icono de dispositivo a implementar']"  required>
+                                                <div>
+                                                    <div>
+                                                        <div style="display: -webkit-inline-box; padding: 5px; margin: 5px;">
+                                                            <v-radio value="mdi-door"></v-radio><v-icon>mdi-door</v-icon>                                                     
+                                                        </div>
+                                                        <div style="display: -webkit-inline-box; padding: 5px; margin: 5px;">
+                                                            <v-radio  value="mdi-door-open"></v-radio><v-icon>mdi-door-open</v-icon>                                                     
+                                                        </div>
+                                                        <div style="display: -webkit-inline-box; padding: 5px; margin: 5px;">
+                                                            <v-radio value="mdi-coach-lamp"></v-radio><v-icon>mdi-coach-lamp</v-icon>                                                     
+                                                        </div>
+                                                        <div style="display: -webkit-inline-box; padding: 5px; margin: 5px;">
+                                                            <v-radio value="mdi-window-open-variant"></v-radio><v-icon>mdi-window-open-variant</v-icon>                                                     
+                                                        </div>                                                
+                                                        <div style="display: -webkit-inline-box; padding: 5px; margin: 5px;">
+                                                            <v-radio  value="mdi-motion-sensor"></v-radio><v-icon>mdi-motion-sensor</v-icon>                                                     
+                                                        </div>
+                                                    </div>
+                                                    <div>
+                                                        <div style="display: -webkit-inline-box; padding: 5px; margin: 5px;">
+                                                            <v-radio value="mdi-alarm-light"></v-radio><v-icon>mdi-alarm-light</v-icon>                                                     
+                                                        </div>
+                                                        <div style="display: -webkit-inline-box; padding: 5px; margin: 5px;">
+                                                            <v-radio  value="mdi-wall"></v-radio><v-icon>mdi-wall</v-icon>                                                     
+                                                        </div>
+                                                        <div style="display: -webkit-inline-box; padding: 5px; margin: 5px;">
+                                                            <v-radio  value="mdi-lightbulb"></v-radio><v-icon>mdi-lightbulb</v-icon>                                                     
+                                                        </div>
+                                                        <div style="display: -webkit-inline-box; padding: 5px; margin: 5px;">
+                                                            <v-radio value="mdi-fan"></v-radio><v-icon>mdi-fan</v-icon>                                                     
+                                                        </div>
+                                                        <div style="display: -webkit-inline-box; padding: 5px; margin: 5px;">
+                                                            <v-radio value="mdi-light-switch"></v-radio><v-icon>mdi-light-switch</v-icon>                                                     
+                                                        </div>  
+                                                    </div>
+                                                </div>                                                                                                                                         
+                                            
+                                            </v-radio-group>
+                                        </v-row>                                 
+                                        
+                                </v-container>
+                                    </v-card-text>
+                                        <!--Footer o pie de pagina (Botones de Cancelar y Guardar)-->
+                                        <v-card-actions style="padding-bottom:20px;">
+                                            <v-spacer></v-spacer>
+                                            <v-btn color="grey darken-2 white--text" @click="guardarDispositivo()" type="submit" margin="auto" dark style="margin:0px;" elevation="5">GUARDAR</v-btn>
+                                            <v-btn color="white black--text" @click="dialogNuevoDispositivo=false"margin="auto" style="width: auto; margin:3px;" elevation="5">Cancelar</v-btn>                
+                                        </v-card-actions>
+                            </v-form>
+                    </v-card>
+                </v-dialog>
+
+                <!--COMPONENTE DE DIALOGO PARA CREAR NUEVA HABITACION-->
+                <v-dialog v-model="dialogNuevaHabitacion"  max-width="700" display = "block">
+                    <v-card>
+                    <!--Titulo de la tarjeta (Titulo de esta tarjeta)-->
+                        <v-card-title class="grey darken-3 white--text">{{nombreCardAccionHabitacion }}{{ nombreHabitacionAEditar}}</v-card-title> 
+                        <!--Body o cuerpo de la tarjeta (Formularios)-->
+                        <v-card-text style="padding-bottom:0px;">
+                            <v-form>
+                                <v-container>
+                                    <input v-model="nuevaHabitacion.id" hidden ></input>
+                                    <!--filas-->
+                                    <p></p>                                      
+                                        <!--Card para nueva Habitacion-->
+                                        <v-row cols="12" md="4">
+                                            <v-text-field v-model="nuevaHabitacion.nombre"  label="Nombre Habitacion"  required>{{nuevaHabitacion.nombre}}</v-text-field>
+                                        </v-row>                                                                  
+                                        
+                                </v-container>
+                                    </v-card-text>
+                                        <!--Footer o pie de pagina (Botones de Cancelar y Guardar)-->
+                                        <v-card-actions style="padding-bottom:20px">
+                                            <v-spacer></v-spacer>
+                                            <v-btn @click="guardarDispositivo()" type="submit" color="grey darken-3" margin="auto" dark style="margin:0px;" elevation="5">GUARDAR</v-btn>
+                                            <v-btn @click="dialogNuevaHabitacion=false" color="white black--text" margin="auto" style="width: auto; margin:3px;" elevation="5">Cancelar</v-btn>                
+                                        </v-card-actions>
+                            </v-form>
+                    </v-card>
+                </v-dialog>
+
+            <!-- Account -->      
+                <v-card class="mx-auto" color="grey lighten-3 black--text" style="padding: 15px;" max-width="800" elevation="10" v-if="cajonPerfilUsuario == true" >                   
+                    <div style=" padding: 10px; margin: 30px;">
+                        <v-row style=" font-size: 50px; padding: 10px; border: 10px; margin-left: 170px;" > Perfil de Usuario</v-row>
+                        <v-avatar size="200" style=" padding: 5px; margin-left: 250px;">
+                            <img style="border: solid 2px gray; padding: 15px; " src="img/userDefault.png" alt="John"  >
+                        </v-avatar >
+                        <div style="padding: 40px; margin: 10px;">
+                            <v-row style="font-size: 22px; padding-left: 60px; " > Nombre completo:  <%= user.u_nombre %></v-row>
+                            <v-row style="font-size: 22px; padding-left: 60px; " > Usuario:  <%= user.u_usuario %></v-row>
+                            <v-row style="font-size: 22px; padding-left: 60px; " > Rol:  <%= user.u_rol %></v-row>                           
+                            <v-row style="padding: 20px;">
+                                <v-spacer></v-spacer>
+                                <v-btn style="justify-content: right; padding: 10px; margin: 10px;" type="submit" color="grey darken-3" margin="auto" dark style="margin:0px;" @click="editarAccount()">CAMBIAR CONTRASENA</v-btn>
+                            </v-row>
+                        </div>
+                    </div>
+                </v-card>
+                 <!--COMPONENTE DE DIALOGO PARA CAMBIAR LA CONTRASENA DE UN USUARIO-->
+                <v-dialog v-model="dialogCambiarContrasena" max-width="600" display = "block">
+                    <v-card>
+                    <!--Titulo de la tarjeta (Titulo de esta tarjeta)-->
+                        <v-card-title class="grey darken-3 white--text">{{ nombreUsuarioCambioContrasena }}</v-card-title> 
+                        <!--Body o cuerpo de la tarjeta (Formularios)-->
+                        <v-card-text style="padding-bottom:0px;">
+                            <v-form>
+                                <v-container>                                          
+                                        
+                                        <!--Columnas--> 
+                                        <v-row cols="12" md="4" >
+                                            <v-text-field v-model="cambioContrasena.nombre" label="Nombre de usuario" required></v-text-field>
+                                        </v-row>                        
+                                        <v-row cols="12" md="4" >
+                                            <v-text-field v-model="cambioContrasena.antiguaContrasena" type="password"  :rules="[v => !!v || 'Password is required', v => v.length >= 8 || 'La contraseña debe contener mínimamente 8 caracteres']" label="Antigua contraseña" required></v-text-field>
+                                        </v-row>
+                                        <v-row cols="12" md="4" >
+                                            <v-text-field v-model="cambioContrasena.nuevaContrasena" type="password"  :rules="[v => this.nuevaContrasena === this.nuevaContrasenaDos || 'La contraseña no coincide']" label="Nueva contraseña" required></v-text-field>
+                                        </v-row>
+                                        <v-row cols="12" md="4" >
+                                            <v-text-field v-model="cambioContrasena.nuevaContrasenaDos" type="password"  :rules="[v => this.nuevaContrasena === this.nuevaContrasenaDos || 'La contraseña no coincide']" label="Confirmacion de nueva contraseña" required></v-text-field>
+                                        </v-row>
+                                </v-container>
+                                    </v-card-text>
+                                        <!--Footer o pie de pagina (Botones de Cancelar y Guardar)-->
+                                        <v-card-actions style="padding-bottom:20px">
+                                            <v-spacer></v-spacer>
+                                            <v-btn @click="cambiarContrasena(cambioContrasena.nombre)" type="submit" color="grey darken-3 white--text" margin="auto" dark style="margin:0px;" elevation="5">{{ nombreBotonCambiarContrasena }}</v-btn>
+                                            <v-btn @click="dialogCambiarContrasena = false" color="white black--text" margin="auto" style="width: auto; margin:3px;" elevation="5">CANCELAR</v-btn>                
+                                        </v-card-actions>
+                            </v-form>
+                    </v-card>
+                </v-dialog> 
+                 
+            </v-main>
+        </v-sheet>
+
+        </v-app>
+    </template>
+
+    </div>  
+</v-container>
+    <script src="js/vue.js"></script>
+    <script src="js/vuetify.js"></script>
+    <script src="js/axios.js" integrity="sha512-nqIFZC8560+CqHgXKez61MI0f9XSTKLkm0zFVm/99Wt0jSTZ7yeeYwbzyl0SGn/s8Mulbdw+ScCG41hmO2+FKw==" crossorigin="anonymous"></script>
+    <script src="js/sweetalert2.all.min.js"></script>
+    <script src="js/codigoVue.js"></script>   
+</body>
+</html>
